@@ -1,0 +1,17 @@
+body {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    background-color: white;
+
+}
+.green-button {
+    background-color: #5b825d; /* A specific shade of green (often used in Material Design) */
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block; /* Ensures padding and margins work correctly */
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px; /* Adds slightly rounded corners */
+  }

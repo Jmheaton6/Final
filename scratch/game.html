@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- The title appears in the browser tab -->
+    <title>Augusta Legends: Masters Trivia</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Apply base font and Masters theme colors */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Subtle argyle-like background pattern */
+            background-color: #E6F2E6; /* Light Masters green base */
+            background-image:
+                linear-gradient(315deg, rgba(0, 106, 78, 0.05) 25%, transparent 25%),
+                linear-gradient(45deg, rgba(0, 106, 78, 0.05) 25%, transparent 25%),
+                linear-gradient(315deg, rgba(0, 106, 78, 0.05) 75%, transparent 75%),
+                linear-gradient(45deg, rgba(0, 106, 78, 0.05) 75%, transparent 75%);
+            background-size: 40px 40px; /* Size of the pattern */
+            background-position: 0 0, 20px 20px, 0 0, 20px 20px; /* Offset for diamond shape */
+            color: #004F31; /* Dark Masters green text */
+        }
+        /* Custom Masters Green for backgrounds */
+        .bg-masters-green { background-color: #006A4E; }
+        /* Custom Masters Gold for accents */
+        .bg-masters-gold { background-color: #FFD700; }
+        .text-masters-gold { color: #FFD700; }
+        .border-masters-gold { border-color: #FFD700; }
+        .hover\:bg-masters-gold-dark:hover { background-color: #EABE00; }
+        .hover\:bg-masters-green-dark:hover { background-color: #004F31; }
+
+        /* Style for answer buttons during feedback */
+        .correct-answer {
+            background-color: #22C55E !important; /* Tailwind green-500 */
+            color: white !important;
+            border-color: #16A34A !important; /* Tailwind green-600 */
+        }
+        .incorrect-answer {
+            background-color: #EF4444 !important; /* Tailwind red-500 */
+            color: white !important;
+            border-color: #DC2626 !important; /* Tailwind red-600 */
+            opacity: 0.7;
+        }
+        /* Ensure buttons have consistent height */
+        .answer-btn {
+            min-height: 4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1rem; /* Adjust padding */
+        }
+        /* Progress Bar Styling */
+        #progressBarContainer {
+            width: 100%;
+            background-color: #D1E2D9; /* Lighter green */
+            border-radius: 9999px; /* Pill shape */
+            overflow: hidden;
+            height: 1rem; /* Adjust height */
+            margin-bottom: 1.5rem; /* Space below progress bar */
+            border: 1px solid #004F31; /* Dark green border */
+        }
+        #progressBar {
+            height: 100%;
+            width: 0%; /* Starts empty */
+            background-color: #FFD700; /* Gold progress */
+            border-radius: 9999px;
+            transition: width 0.5s ease-in-out; /* Smooth transition */
+            text-align: center; /* Center potential text inside */
+            color: #004F31;
+            font-size: 0.75rem;
+            line-height: 1rem; /* Match height */
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <!-- Main Game Container -->
+    <div id="gameContainer" class="bg-white w-full max-w-2xl rounded-lg shadow-xl p-6 md:p-10 border-2 border-masters-gold">
+
+        <!-- Game Title -->
+        <h1 class="text-3xl md:text-4xl font-bold text-center text-masters-green mb-2">
+            Augusta Legends
+        </h1>
+        <h2 class="text-xl md:text-2xl text-center text-masters-green opacity-90 mb-6">
+             Masters Trivia Challenge
+        </h2>
+
+
+        <!-- Progress Bar -->
+        <div id="progressBarContainer">
+            <div id="progressBar"></div>
+        </div>
+
+        <!-- Score and Question Number -->
+        <div id="scoreArea" class="flex justify-between items-center mb-6 text-lg">
+            <span id="questionCounter" class="font-semibold">Question 1 / 10</span>
+            <span id="scoreDisplay" class="font-bold text-masters-green">Score: 0</span>
+        </div>
+
+        <!-- Question Display -->
+        <div id="questionContainer" class="mb-6">
+             <!-- Category Display -->
+            <p id="questionCategory" class="text-sm text-center text-gray-500 uppercase font-semibold mb-2">Category</p>
+            <!-- Question Text -->
+            <p id="questionText" class="text-xl md:text-2xl text-center font-semibold mb-6 min-h-[6rem] flex items-center justify-center">
+                Loading question...
+            </p>
+            <!-- Answer Buttons -->
+            <div id="answerButtons" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Answer buttons will be generated here -->
+            </div>
+        </div>
+
+        <!-- Feedback Area -->
+        <div id="feedbackArea" class="text-center text-lg font-semibold mt-4 min-h-[3rem] flex items-center justify-center">
+            <!-- Feedback like 'Correct!' or 'Wrong!' appears here -->
+        </div>
+
+        <!-- Final Score / Play Again -->
+        <div id="resultsContainer" class="text-center hidden mt-8">
+             <h2 class="text-2xl font-bold text-masters-green mb-4">Quiz Complete!</h2>
+             <p id="finalScoreText" class="text-xl mb-6">Your final score is 0 out of 10.</p>
+             <button id="playAgainButton" class="bg-masters-gold text-masters-green font-bold py-3 px-8 rounded-lg shadow hover:bg-masters-gold-dark transition duration-200 text-lg">
+                 Play Again
+             </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const gameContainer = document.getElementById('gameContainer');
+        const scoreArea = document.getElementById('scoreArea');
+        const questionCounter = document.getElementById('questionCounter');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const questionContainer = document.getElementById('questionContainer');
+        const questionCategory = document.getElementById('questionCategory'); // Added category element
+        const questionText = document.getElementById('questionText');
+        const answerButtons = document.getElementById('answerButtons');
+        const feedbackArea = document.getElementById('feedbackArea');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const finalScoreText = document.getElementById('finalScoreText');
+        const playAgainButton = document.getElementById('playAgainButton');
+        const progressBarContainer = document.getElementById('progressBarContainer'); // Added progress bar container
+        const progressBar = document.getElementById('progressBar'); // Added progress bar element
+
+        // --- Trivia Questions (Expanded Set with Categories) ---
+        const triviaQuestions = [
+            // History
+            { category: "History", question: "In what year was the first Masters Tournament held?", options: ["1928", "1934", "1941", "1950"], correctAnswerIndex: 1 },
+            { category: "History", question: "Who were the co-founders of Augusta National Golf Club?", options: ["Bobby Jones & Clifford Roberts", "Arnold Palmer & Jack Nicklaus", "Ben Hogan & Sam Snead", "Walter Hagen & Gene Sarazen"], correctAnswerIndex: 0 },
+            { category: "History", question: "The Masters was not played for three years during which major world event?", options: ["World War I", "The Great Depression", "World War II", "The Korean War"], correctAnswerIndex: 2 },
+            { category: "History", question: "What famous shot did Gene Sarazen hit on the 15th hole in 1935, known as the 'shot heard 'round the world'?", options: ["Hole-in-one", "Eagle", "Albatross (Double Eagle)", "Chip-in Birdie"], correctAnswerIndex: 2 },
+            { category: "History", question: "Which golfer was the first non-American to win the Masters?", options: ["Seve Ballesteros (Spain)", "Gary Player (South Africa)", "Nick Faldo (England)", "Bernhard Langer (Germany)"], correctAnswerIndex: 1 },
+
+            // Players
+            { category: "Players", question: "Who has won the most Masters Tournaments?", options: ["Tiger Woods", "Arnold Palmer", "Jack Nicklaus", "Phil Mickelson"], correctAnswerIndex: 2 },
+            { category: "Players", question: "How many Masters Tournaments has Tiger Woods won?", options: ["4", "5", "6", "7"], correctAnswerIndex: 1 },
+            { category: "Players", question: "Who was the oldest winner of the Masters?", options: ["Jack Nicklaus", "Raymond Floyd", "Ben Crenshaw", "Mark O'Meara"], correctAnswerIndex: 0 },
+            { category: "Players", question: "Which player holds the record for the lowest 72-hole score at the Masters?", options: ["Tiger Woods", "Jordan Spieth", "Dustin Johnson", "Jack Nicklaus"], correctAnswerIndex: 2 },
+            { category: "Players", question: "Who is known as 'The King' in the world of golf and won 4 Masters titles?", options: ["Jack Nicklaus", "Gary Player", "Arnold Palmer", "Sam Snead"], correctAnswerIndex: 2 },
+
+            // The Course
+            { category: "The Course", question: "Augusta National Golf Club, home of the Masters, is located in which US state?", options: ["Florida", "Georgia", "South Carolina", "North Carolina"], correctAnswerIndex: 1 },
+            { category: "The Course", question: "What is the name of the famous three-hole stretch starting at hole 11 at Augusta National?", options: ["Hogan's Alley", "Magnolia Lane", "Amen Corner", "The Bear Trap"], correctAnswerIndex: 2 },
+            { category: "The Course", question: "What type of trees line the entrance driveway to Augusta National?", options: ["Oak Trees", "Pine Trees", "Magnolia Trees", "Azaleas"], correctAnswerIndex: 2 },
+            { category: "The Course", question: "Which hole at Augusta is named 'Golden Bell' and is a famous short par 3?", options: ["Hole 6", "Hole 12", "Hole 16", "Hole 4"], correctAnswerIndex: 1 },
+            { category: "The Course", question: "What body of water comes into play significantly on holes 11, 12, and 16?", options: ["Butler Creek", "Lake Palmer", "Sarazen Pond", "Rae's Creek"], correctAnswerIndex: 3 },
+
+            // Traditions
+            { category: "Traditions", question: "What is awarded to the winner of the Masters each year, besides prize money?", options: ["A Gold Medal", "The Claret Jug", "A Green Jacket", "The Wanamaker Trophy"], correctAnswerIndex: 2 },
+            { category: "Traditions", question: "In what month is the Masters Tournament traditionally held?", options: ["March", "April", "May", "June"], correctAnswerIndex: 1 },
+            { category: "Traditions", question: "What event traditionally takes place on the Wednesday before the Masters Tournament begins?", options: ["The Champions Dinner", "The Opening Ceremony", "The Par 3 Contest", "The Long Drive Contest"], correctAnswerIndex: 2 },
+            { category: "Traditions", question: "What is the name of the dinner held on Tuesday night for past champions and the current chairman?", options: ["The Masters Gala", "The Champions Dinner", "The Green Jacket Banquet", "The Augusta Supper"], correctAnswerIndex: 1 },
+            { category: "Traditions", question: "What type of sandwiches are famously inexpensive and popular concessions at the Masters?", options: ["Pimento Cheese & Egg Salad", "Ham & Turkey", "Roast Beef & Pastrami", "Tuna & Chicken Salad"], correctAnswerIndex: 0 }
+        ];
+
+        // --- Game State ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let questions = []; // Holds the shuffled questions for the current round
+        const QUESTIONS_PER_ROUND = 10; // Number of questions to ask per game
+
+        // --- Game Functions ---
+
+        // Shuffle array elements (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Start a new game
+        function startGame() {
+            // Shuffle questions and select a subset
+            questions = shuffleArray([...triviaQuestions]).slice(0, QUESTIONS_PER_ROUND);
+            currentQuestionIndex = 0;
+            score = 0;
+
+            // Reset UI
+            scoreDisplay.textContent = `Score: ${score}`;
+            resultsContainer.classList.add('hidden');
+            questionContainer.classList.remove('hidden');
+            scoreArea.classList.remove('hidden');
+            feedbackArea.textContent = '';
+            feedbackArea.className = 'text-center text-lg font-semibold mt-4 min-h-[3rem] flex items-center justify-center'; // Reset feedback classes
+            progressBarContainer.classList.remove('hidden'); // Show progress bar
+            updateProgressBar(); // Set initial progress bar state
+
+            // Display the first question
+            displayQuestion();
+        }
+
+        // Update the progress bar display
+        function updateProgressBar() {
+            const progressPercent = (currentQuestionIndex / questions.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            // Optional: Add text inside the bar
+            // progressBar.textContent = `${Math.round(progressPercent)}%`;
+        }
+
+        // Display the current question and answer options
+        function displayQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                endGame();
+                return;
+            }
+
+            const currentQuestion = questions[currentQuestionIndex];
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1} / ${questions.length}`;
+            questionCategory.textContent = `Category: ${currentQuestion.category}`; // Display category
+            questionText.textContent = currentQuestion.question;
+
+            // Clear previous answer buttons
+            answerButtons.innerHTML = '';
+            feedbackArea.textContent = ''; // Clear feedback from previous question
+
+            // Create and append new answer buttons
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add(
+                    'answer-btn', 'bg-masters-green', 'text-white', 'font-semibold', 'py-3', 'px-4',
+                    'rounded-lg', 'shadow', 'hover:bg-masters-green-dark', 'transition', 'duration-200', 'text-center'
+                );
+                button.dataset.index = index;
+                button.addEventListener('click', handleAnswerClick);
+                answerButtons.appendChild(button);
+            });
+             // Update progress bar for the *upcoming* question
+            updateProgressBar();
+        }
+
+        // Handle user clicking an answer button
+        function handleAnswerClick(event) {
+            const selectedButton = event.target;
+            const selectedAnswerIndex = parseInt(selectedButton.dataset.index);
+            const currentQuestion = questions[currentQuestionIndex];
+            const correctAnswerIndex = currentQuestion.correctAnswerIndex;
+
+            // Disable all buttons after selection
+            const allButtons = answerButtons.querySelectorAll('button');
+            allButtons.forEach(btn => btn.disabled = true);
+
+            // Check if the answer is correct
+            if (selectedAnswerIndex === correctAnswerIndex) {
+                score++;
+                scoreDisplay.textContent = `Score: ${score}`;
+                feedbackArea.textContent = 'Correct!';
+                feedbackArea.classList.add('text-green-600');
+                selectedButton.classList.add('correct-answer');
+            } else {
+                feedbackArea.innerHTML = `Wrong! Correct: <span class="font-bold">${currentQuestion.options[correctAnswerIndex]}</span>`; // Show correct answer clearly
+                feedbackArea.classList.add('text-red-600');
+                selectedButton.classList.add('incorrect-answer');
+
+                // Also highlight the correct answer in green
+                allButtons.forEach(btn => {
+                    if (parseInt(btn.dataset.index) === correctAnswerIndex) {
+                         btn.classList.add('correct-answer');
+                         btn.classList.remove('bg-masters-green'); // Ensure correct style overrides base
+                    }
+                });
+            }
+
+            // Move to the next question after a short delay
+            setTimeout(() => {
+                currentQuestionIndex++;
+                 // Update progress bar *before* displaying next question or ending game
+                updateProgressBar();
+                feedbackArea.className = 'text-center text-lg font-semibold mt-4 min-h-[3rem] flex items-center justify-center'; // Reset feedback color classes
+                displayQuestion();
+            }, 2800); // Slightly longer delay for reading feedback
+        }
+
+        // End the game and show results
+        function endGame() {
+            questionContainer.classList.add('hidden');
+            scoreArea.classList.add('hidden');
+            progressBarContainer.classList.add('hidden'); // Hide progress bar at the end
+            feedbackArea.textContent = ''; // Clear last feedback
+            resultsContainer.classList.remove('hidden');
+            finalScoreText.textContent = `Your final score is ${score} out of ${questions.length}.`;
+        }
+
+        // --- Event Listeners ---
+        playAgainButton.addEventListener('click', startGame);
+
+        // --- Initialization ---
+        window.onload = () => {
+            startGame(); // Start the game when the page loads
+        };
+
+    </script>
+
+</body>
+</html>
